@@ -1,0 +1,98 @@
+version: "3.9"
+
+  # ---------- Database ----------
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: streaming_sql
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "Your_password123!"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sql_data:/var/opt/mssql
+
+  # ---------- RabbitMQ ----------
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: "guest"
+      RABBITMQ_DEFAULT_PASS: "guest"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ---------- User Service ----------
+  userservice:
+    build:
+      context: .
+      dockerfile: ./src/UserService/Dockerfile
+    container_name: userservice
+    depends_on:
+      - sqlserver
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ASPNETCORE_URLS: "http://+:8080"
+      ConnectionStrings__UsersDb: "Server=sqlserver,1433;Database=StreamingService_Users;User Id=sa;Password=Your_password123!;TrustServerCertificate=True;"
+    ports:
+      - "5001:8080"
+
+  # ---------- Video Service ----------
+  videoservice:
+    build:
+      context: .
+      dockerfile: ./src/VideoService/Dockerfile
+    container_name: videoservice
+    depends_on:
+      - sqlserver
+      - rabbitmq
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ASPNETCORE_URLS: "http://+:8080"
+      RabbitMq__Connection: "host=rabbitmq;username=guest;password=guest"
+      ConnectionStrings__VideosDb: "Server=sqlserver,1433;Database=StreamingService_Videos;User Id=sa;Password=Your_password123!;TrustServerCertificate=True;"
+    ports:
+      - "5002:8080"
+
+  # ---------- Notification Service ----------
+  notificationservice:
+    build:
+      context: .
+      dockerfile: ./src/NotificationService/Dockerfile
+    container_name: notificationservice
+    depends_on:
+      - sqlserver
+      - rabbitmq
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ASPNETCORE_URLS: "http://+:8080"
+      RabbitMq__Connection: "host=rabbitmq;username=guest;password=guest"
+      ConnectionStrings__NotificationsDb: "Server=sqlserver,1433;Database=StreamingService_Notifications;User Id=sa;Password=Your_password123!;TrustServerCertificate=True;"
+    ports:
+      - "5003:8080"
+
+  # ---------- API GATEWAY ----------
+  apigateway:
+    build:
+      context: .
+      dockerfile: ./src/ApiGateway/Dockerfile
+    container_name: apigateway
+    depends_on:
+      - userservice
+      - videoservice
+      - notificationservice
+    environment:
+      ASPNETCORE_URLS: "http://+:8080"
+      ASPNETCORE_ENVIRONMENT: "Development"
+    ports:
+      - "5000:8080"
+
+volumes:
+  sql_data:
