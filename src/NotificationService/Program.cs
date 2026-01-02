@@ -42,6 +42,7 @@ public class Program
 
         Console.WriteLine("[APP] NotificationService starting...");
 
+        
         using (var scope = app.Services.CreateScope())
         {
             var sub = scope.ServiceProvider.GetRequiredService<VideoCreatedSubscriber>();
@@ -54,11 +55,12 @@ public class Program
 
         
         // Auto-create DB + tables (DEV ONLY)
+        /*
         using (var scope = app.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<NotificationsDbContext>();
             db.Database.EnsureCreated();
-        } 
+        } */
 
 
         if (app.Environment.IsDevelopment())

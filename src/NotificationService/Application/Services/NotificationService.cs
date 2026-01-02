@@ -17,7 +17,7 @@ namespace NotificationService.Application.Services
         {
             var notification = new NotificationEntity(userId, message);
 
-            // "Send" = demo: skriv til log + markér sendt
+            // Demo Notifikation: skriv til log og markér notifikationen som sendt
             Console.WriteLine($"[NOTIFICATION] -> UserId={userId} | {message}");
             notification.MarkSent();
 
