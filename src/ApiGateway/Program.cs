@@ -8,7 +8,7 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Load Ocelot config (teacher style folder)
+// Load Ocelot config 
 builder.Configuration.AddJsonFile("Configuration/ocelot.streamingservice.json", optional: false, reloadOnChange: true);
 
 // MVC + Swagger
