@@ -8,15 +8,15 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Load Ocelot config 
+// Indlæs Ocelot-konfiguration fra "Configuration"-mappen (ocelot.streamingservice.json)
 builder.Configuration.AddJsonFile("Configuration/ocelot.streamingservice.json", optional: false, reloadOnChange: true);
 
-// MVC + Swagger
+// MVC og Swagger
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// JWT auth
+// JWT-autentificering
 var jwtKey = builder.Configuration["Jwt:Key"]!;
 var jwtIssuer = builder.Configuration["Jwt:Issuer"]!;
 var jwtAudience = builder.Configuration["Jwt:Audience"]!;
@@ -49,19 +49,16 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-
-
 builder.Services.AddAuthorization();
 
-// DI
+// Dependency Injection af JwtTokenService
 builder.Services.AddSingleton<JwtTokenService>();
 
-// Ocelot
+// Ocelot (API-gateway)
 builder.Services.AddOcelot(builder.Configuration);
 
 var app = builder.Build();
 Console.WriteLine("[DEBUG] Controllers mapped: Faucet should be /faucet");
-
 
 if (app.Environment.IsDevelopment())
 {
