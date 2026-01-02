@@ -10,7 +10,7 @@ namespace VideoService.Api.Controllers
     [Route("api/[controller]")]
     public class VideoController : ControllerBase
     {
-        // Dependency Injection: Vi modtager vores Service og Publisher gennem constructoren.
+        // Dependency Injection: Inject VideoService og Publisher gennem constructoren.
         // Det sikrer løs kobling og gør det nemt at teste (mocke).
         private readonly IVideoService _videoService;
         private readonly VideoEventPublisher _publisher;
@@ -27,8 +27,8 @@ namespace VideoService.Api.Controllers
             // Henter data fra applikationslaget (via Repository)
             var videos = await _videoService.GetAllVideosAsync();
 
-            // Mapping: Vi mapper fra interne Entities til eksterne DTO'er.
-            // Det sikrer, at vi ikke udstiller vores database-struktur direkte.
+            // Mapping: Map fra interne Entities til eksterne DTO'er.
+            // sikrer, at vi ikke udstiller  database-struktur direkte.
             var response = videos.Select(v => new VideoResponseDto
             {
                 Id = v.Id,
@@ -52,7 +52,7 @@ namespace VideoService.Api.Controllers
             if (v == null)
                 return NotFound();
 
-            // Igen mapper vi Entity -> DTO før vi sender svar
+            // Igen mapper vi Entityt til DTO før vi sender svar
             var response = new VideoResponseDto
             {
                 Id = v.Id,
@@ -90,7 +90,7 @@ namespace VideoService.Api.Controllers
             }
             catch (Exception ex)
             {
-                // RESILIENCE: Hvis RabbitMQ er nede, griber vi fejlen her.
+                // RESILIENCE: Hvis RabbitMQ er nede, gribes fejlen her.
                 // Vi logger en advarsel, men crasher IKKE requestet.
                 // Det betyder, at brugeren stadig får "Succes" (201 Created), selvom notifikationen måske mangler.
                 Console.WriteLine($"[WARN] Failed to publish VideoCreatedEvent: {ex.Message}");
