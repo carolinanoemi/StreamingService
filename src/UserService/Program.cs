@@ -28,11 +28,12 @@ public class Program
         var app = builder.Build();
 
         // Auto-create DB + tables (DEV ONLY)
+        /*
         using (var scope = app.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<UsersDbContext>();
             db.Database.EnsureCreated();
-        }
+        }*/
 
 
         if (app.Environment.IsDevelopment())

@@ -1,7 +1,7 @@
 version: "3.9"
 
-  # ---------- Database ----------
 services:
+  # ---------- Database ----------
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: streaming_sql
@@ -29,7 +29,7 @@ services:
       timeout: 5s
       retries: 10
 
-  # ---------- User Service ----------
+  # ---------- User Service (Port 5001) ----------
   userservice:
     build:
       context: .
@@ -44,7 +44,7 @@ services:
     ports:
       - "5001:8080"
 
-  # ---------- Video Service ----------
+  # ---------- Video Service (Port 5002) ----------
   videoservice:
     build:
       context: .
@@ -61,7 +61,7 @@ services:
     ports:
       - "5002:8080"
 
-  # ---------- Notification Service ----------
+  # ---------- Notification Service (Port 5003) ----------
   notificationservice:
     build:
       context: .
@@ -78,7 +78,7 @@ services:
     ports:
       - "5003:8080"
 
-  # ---------- API GATEWAY ----------
+  # ---------- API GATEWAY (Port 5000) ----------
   apigateway:
     build:
       context: .
@@ -88,11 +88,65 @@ services:
       - userservice
       - videoservice
       - notificationservice
+      - ratingservice
+      - watchhistoryservice
+      - subscriptionservice
     environment:
       ASPNETCORE_URLS: "http://+:8080"
       ASPNETCORE_ENVIRONMENT: "Development"
     ports:
       - "5000:8080"
+
+  # ---------- Rating Service (NY - Port 5004) ----------
+  ratingservice:
+    build:
+      context: .
+      dockerfile: ./src/RatingService/Dockerfile
+    container_name: ratingservice
+    ports:
+      - "5004:8080"
+    environment:
+      Redis__ConnectionString: "redis:6379"
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ConnectionStrings__RatingDb: "Server=sqlserver;Database=StreamingService_Ratings;User Id=sa;Password=Your_password123!;TrustServerCertificate=True;"
+    depends_on:
+      - sqlserver
+      - redis
+
+  # ---------- WatchHistory Service (NY - Port 5005) ----------
+  watchhistoryservice:
+    build:
+      context: .
+      dockerfile: ./src/WatchHistoryService/Dockerfile
+    container_name: watchhistoryservice
+    ports:
+      - "5005:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ConnectionStrings__WatchHistoryDb: "Server=sqlserver;Database=StreamingService_WatchHistory;User Id=sa;Password=Your_password123!;TrustServerCertificate=True;"
+    depends_on:
+      - sqlserver
+
+  # ---------- Subscription Service (NY - Port 5006) ----------
+  subscriptionservice:
+    build:
+      context: .
+      dockerfile: ./src/SubscriptionService/Dockerfile
+    container_name: subscriptionservice
+    ports:
+      - "5006:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ConnectionStrings__SubscriptionDb: "Server=sqlserver;Database=StreamingService_Subscriptions;User Id=sa;Password=Your_password123!;TrustServerCertificate=True;"
+    depends_on:
+      - sqlserver
+
+  # ---------- REDIS (Cache) ----------
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
 
 volumes:
   sql_data:
